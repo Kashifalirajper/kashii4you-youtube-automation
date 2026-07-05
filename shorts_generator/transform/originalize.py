@@ -32,20 +32,56 @@ def generate_original_script(source_transcript: Dict, highlight: Dict, topic_con
 
 def generate_title_description_tags(result: Dict, trend_context: Dict, config: AutomationConfig) -> Dict:
     base_title = str(result.get("title") or trend_context.get("title") or "AI-assisted Short").strip()
-    title = base_title[:96].rstrip() or "AI-assisted Short"
+    niche = str(trend_context.get("niche") or "").replace("_", " ").strip()
+    channel_name = config.channel_name or "Kashii4you"
+    title = base_title[:96].rstrip() or "Islamic Reminder"
     if "#Shorts" not in title and len(title) <= 92:
         title = f"{title} #Shorts"
 
     source_url = trend_context.get("url", "")
+    seo_topic = niche.title() if niche else "Islamic Reminder"
+    hashtags = [
+        "#Shorts",
+        "#IslamicShorts",
+        "#IslamicReminder",
+        "#Muslim",
+        "#Dua",
+        "#Sabr",
+        "#Allah",
+    ]
     description_lines = [
-        "AI-assisted commentary/editing.",
-        "This upload is private/unlisted by default for review.",
+        f"{title}",
+        "",
+        f"A calm {seo_topic} short from {channel_name}.",
+        "Original reminder, premium edit, and peaceful background audio for daily motivation.",
+        "",
+        "Subscribe for daily Islamic reminders, duas, sabr motivation, and short faith-based reflections.",
     ]
     if source_url:
         description_lines.append(f"Source/context: {source_url}")
-    description_lines.append("#Shorts")
+    description_lines.extend(["", " ".join(hashtags)])
 
-    tags: List[str] = list(dict.fromkeys([*(config.default_tags or []), "shorts", "ai commentary"]))
+    seo_tags = [
+        *(config.default_tags or []),
+        "shorts",
+        "youtube shorts",
+        "islamic shorts",
+        "islamic reminder",
+        "islamic motivation",
+        "muslim motivation",
+        "daily islamic reminder",
+        "dua",
+        "sabr",
+        "allah",
+        "astaghfirullah",
+        "islamic quotes",
+        "urdu islamic status",
+        "hindi islamic status",
+        "kashii4you",
+    ]
+    if niche:
+        seo_tags.append(niche)
+    tags: List[str] = list(dict.fromkeys(seo_tags))
     for tag in trend_context.get("tags", []) or []:
         if len(tags) >= 15:
             break
@@ -56,7 +92,7 @@ def generate_title_description_tags(result: Dict, trend_context: Dict, config: A
     return {
         "title": title[:100],
         "description": "\n".join(description_lines),
-        "tags": list(dict.fromkeys(tags)),
+        "tags": list(dict.fromkeys(tags))[:15],
         "category_id": config.default_category_id,
         "contains_synthetic_media": True,
     }

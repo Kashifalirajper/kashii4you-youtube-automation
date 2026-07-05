@@ -4,8 +4,8 @@ services:
     env_file:
       - .env
     environment:
-      AUTO_PUBLISH: "false"
-      DEFAULT_UPLOAD_PRIVACY: "private"
+      AUTO_PUBLISH: "true"
+      DEFAULT_UPLOAD_PRIVACY: "public"
       DAILY_MAX_UPLOADS: "1"
       TRANSFORMATION_REQUIRED: "true"
       ALLOWED_SOURCE_POLICY: "strict"

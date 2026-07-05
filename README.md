@@ -5,7 +5,7 @@ the Kashii4you channel.
 
 The system creates a new vertical Short, uses owned/licensed background naats
 from `assets/audio`, renders a premium Islamic visual preset, and uploads to
-YouTube as private by default so each video can be reviewed before publishing.
+YouTube publicly when the safety gate passes.
 
 ## What It Does
 
@@ -21,11 +21,11 @@ YouTube as private by default so each video can be reviewed before publishing.
 
 ## Production Defaults
 
-The safe default is private uploads:
+Production is configured for public uploads:
 
 ```text
-AUTO_PUBLISH=false
-DEFAULT_UPLOAD_PRIVACY=private
+AUTO_PUBLISH=true
+DEFAULT_UPLOAD_PRIVACY=public
 DAILY_MAX_UPLOADS=1
 UPLOAD_INTERVAL_HOURS=8
 VISUAL_PRESET=premium_islamic_short
@@ -33,8 +33,7 @@ VOICEOVER_ENABLED=false
 LICENSED_AUDIO_DIR=assets/audio
 ```
 
-Set `AUTO_PUBLISH=true` only after you are comfortable with fully automatic
-public publishing.
+For testing, set `AUTO_PUBLISH=false` and `DEFAULT_UPLOAD_PRIVACY=private`.
 
 ## Required Secrets
 
@@ -82,7 +81,7 @@ Dry run:
 .\.venv\Scripts\python.exe automation.py run-once --region US --mode local --max-uploads 1 --dry-run
 ```
 
-Generate and upload one private Short:
+Generate and upload one public Short when the safety gate passes:
 
 ```powershell
 .\.venv\Scripts\python.exe automation.py deploy-run --region US --mode local --max-uploads 1
@@ -107,7 +106,7 @@ The workflow:
 1. Runs every 8 hours.
 2. Installs Python and FFmpeg.
 3. Generates one original Short.
-4. Uploads it to YouTube as private.
+4. Uploads it to YouTube as public when the safety gate passes.
 5. Saves logs and generated MP4 artifacts.
 
 To test:

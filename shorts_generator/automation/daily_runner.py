@@ -130,10 +130,6 @@ def run_once(
                     {**topic, "url": ""},
                     config,
                 )
-                metadata["description"] = (
-                    f"Original {topic.get('niche', 'educational')} Short by {config.channel_name or 'Kashii4you'}.\n"
-                    "AI-assisted editing/commentary. No reused creator footage.\n#Shorts"
-                )
                 source_id = db.record_source(
                     {**topic, "video_id": topic_video_id, "url": "", "channel_id": "original"},
                     100,
@@ -242,10 +238,6 @@ def run_once(
                 {"title": f"{config.channel_name or 'Kashii4you'} Trend Brief #Shorts"},
                 {**topic, "url": ""},
                 config,
-            )
-            metadata["description"] = (
-                "Original AI-assisted trend commentary/editing. "
-                "Trend source used for topic discovery only.\n#Shorts"
             )
             source_id = db.record_source(
                 {

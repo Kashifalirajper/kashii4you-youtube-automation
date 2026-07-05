@@ -77,12 +77,18 @@ def test_recent_uploads(tmp_path: Path):
     assert uploads[0]["privacy_status"] == "private"
 
 
-def test_upload_metadata_generation_private_disclosure():
-    config = AutomationConfig(default_tags=["shorts", "education"])
-    metadata = generate_title_description_tags({"title": "A useful lesson"}, sample_video(), config)
+def test_upload_metadata_generation_seo_description():
+    config = AutomationConfig(channel_name="Kashii4you", default_tags=["shorts", "education"])
+    metadata = generate_title_description_tags(
+        {"title": "Allah knows what your heart carries"},
+        {**sample_video(), "niche": "islamic_facts", "tags": ["dua", "sabr"]},
+        config,
+    )
     assert len(metadata["title"]) <= 100
-    assert "AI-assisted commentary/editing" in metadata["description"]
-    assert "shorts" in metadata["tags"]
+    assert "daily Islamic reminders" in metadata["description"]
+    assert "#IslamicShorts" in metadata["description"]
+    assert "islamic reminder" in metadata["tags"]
+    assert "dua" in metadata["tags"]
 
 
 def test_auto_publish_false_blocks_public():
@@ -102,6 +108,16 @@ def test_duration_guard_blocks_public():
         {"allowed": True, "risk_level": "low"},
         transformation_applied=True,
         duration_seconds=59,
+    )
+
+
+def test_low_risk_original_can_publish_public():
+    config = AutomationConfig(auto_publish=True, short_max_duration_seconds=58)
+    assert can_publicly_publish(
+        config,
+        {"allowed": True, "risk_level": "low"},
+        transformation_applied=True,
+        duration_seconds=25,
     )
 
 

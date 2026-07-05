@@ -2,7 +2,8 @@
 
 This project is configured for fully original Shorts first: it creates a niche
 video, adds your licensed naat/background audio from `assets/audio`, renders the
-`premium_islamic_short` style, and uploads to YouTube as private by default.
+`premium_islamic_short` style, and uploads to YouTube publicly when the safety
+gate passes.
 
 Do not commit real secrets. Keep them in `.env`, GitHub Actions secrets, or your
 hosting provider's environment variables.
@@ -32,8 +33,8 @@ Optional:
 ## Safe Production Defaults
 
 ```text
-AUTO_PUBLISH=false
-DEFAULT_UPLOAD_PRIVACY=private
+AUTO_PUBLISH=true
+DEFAULT_UPLOAD_PRIVACY=public
 DAILY_MAX_UPLOADS=1
 VISUAL_PRESET=premium_islamic_short
 VOICEOVER_ENABLED=false
@@ -43,9 +44,9 @@ LOGS_DIR=/data/logs
 AUTOMATION_DB_PATH=/data/automation.sqlite
 ```
 
-With these defaults, the automation can run every 8 hours and upload private
-videos for review. Change `AUTO_PUBLISH=true` only when you are comfortable with
-automatic public publishing.
+With these defaults, the automation can run every 8 hours and upload public
+videos after the original-content safety gate passes. For testing, set
+`AUTO_PUBLISH=false` and `DEFAULT_UPLOAD_PRIVACY=private`.
 
 ## Local Test
 
@@ -55,7 +56,7 @@ Dry run:
 .\scripts\deploy_test.ps1 -DryRun
 ```
 
-Generate and upload one private Short:
+Generate and upload one public Short when the safety gate passes:
 
 ```powershell
 .\scripts\deploy_test.ps1
@@ -108,7 +109,7 @@ Each production pass prints JSON and writes `latest_run.json`:
   "errors": [],
   "original_niche_upload": {
     "youtube_url": "https://www.youtube.com/watch?v=VIDEO_ID",
-    "privacy_status": "private"
+    "privacy_status": "public"
   },
   "niche": "islamic_facts"
 }
