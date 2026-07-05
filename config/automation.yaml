@@ -1,0 +1,18 @@
+allowed_channel_ids: []
+blocked_channel_ids: []
+allowed_source_urls: []
+topic_keywords: []
+excluded_keywords: []
+default_category_id: "22"
+default_tags: ["shorts"]
+upload_schedule:
+  enabled: true
+  hour: 10
+  minute: 0
+compliance:
+  require_permission: true
+  allow_creative_commons: true
+  allow_public_standard_license_without_permission: false
+  require_ai_voiceover_or_commentary: true
+  max_clip_duration_seconds: 58
+  upload_privacy_before_review: private

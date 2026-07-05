@@ -1,0 +1,121 @@
+"""Make generated Shorts meaningfully original before upload."""
+from __future__ import annotations
+
+import os
+import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional
+
+from ..config import AutomationConfig
+
+
+@dataclass
+class TransformationResult:
+    file_path: str
+    transformation_applied: bool
+    synthetic_media_used: bool
+    script: str
+
+
+def generate_original_script(source_transcript: Dict, highlight: Dict, topic_context: Optional[Dict] = None) -> str:
+    topic = (topic_context or {}).get("title") or highlight.get("title") or "this topic"
+    hook = highlight.get("hook_sentence") or "Here is the key moment."
+    reason = highlight.get("virality_reason") or "It is useful context for viewers."
+    return (
+        f"Quick context: this Short is about {topic}. "
+        f"{hook} "
+        f"My takeaway: {reason} "
+        "Watch for the main idea, not just the clip."
+    )
+
+
+def generate_title_description_tags(result: Dict, trend_context: Dict, config: AutomationConfig) -> Dict:
+    base_title = str(result.get("title") or trend_context.get("title") or "AI-assisted Short").strip()
+    title = base_title[:96].rstrip() or "AI-assisted Short"
+    if "#Shorts" not in title and len(title) <= 92:
+        title = f"{title} #Shorts"
+
+    source_url = trend_context.get("url", "")
+    description_lines = [
+        "AI-assisted commentary/editing.",
+        "This upload is private/unlisted by default for review.",
+    ]
+    if source_url:
+        description_lines.append(f"Source/context: {source_url}")
+    description_lines.append("#Shorts")
+
+    tags: List[str] = list(dict.fromkeys([*(config.default_tags or []), "shorts", "ai commentary"]))
+    for tag in trend_context.get("tags", []) or []:
+        if len(tags) >= 15:
+            break
+        tag_text = str(tag).strip()
+        if tag_text:
+            tags.append(tag_text[:30])
+
+    return {
+        "title": title[:100],
+        "description": "\n".join(description_lines),
+        "tags": list(dict.fromkeys(tags)),
+        "category_id": config.default_category_id,
+        "contains_synthetic_media": True,
+    }
+
+
+def create_voiceover(script: str) -> Optional[str]:
+    """Stub for future TTS provider integration."""
+    return None
+
+
+def _escape_drawtext(value: str) -> str:
+    return value.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
+
+
+def apply_commentary_overlay(
+    file_path: str,
+    script: str,
+    output_path: Optional[str] = None,
+    brand_name: str = "",
+) -> TransformationResult:
+    source = Path(file_path)
+    output = Path(output_path) if output_path else source.with_name(f"{source.stem}_transformed{source.suffix}")
+    overlay = script[:140]
+    if brand_name:
+        overlay = f"{brand_name}: {overlay}"
+    overlay = _escape_drawtext(overlay)
+    vf = (
+        "drawbox=x=0:y=ih-180:w=iw:h=180:color=black@0.55:t=fill,"
+        f"drawtext=text='{overlay}':x=40:y=h-145:w=w-80:fontcolor=white:fontsize=34:"
+        "box=0:line_spacing=8"
+    )
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-loglevel",
+        "error",
+        "-i",
+        str(source),
+        "-vf",
+        vf,
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "20",
+        "-c:a",
+        "copy",
+        str(output),
+    ]
+    subprocess.run(cmd, check=True)
+    return TransformationResult(
+        file_path=str(output),
+        transformation_applied=os.path.exists(output),
+        synthetic_media_used=True,
+        script=script,
+    )
+
+
+def ensure_transformation(file_path: str, transcript: Dict, highlight: Dict, trend_context: Dict, config: AutomationConfig) -> TransformationResult:
+    script = generate_original_script(transcript, highlight, trend_context)
+    return apply_commentary_overlay(file_path, script, brand_name=config.brand_name)

@@ -1,0 +1,56 @@
+name: Daily Safe Shorts
+
+on:
+  schedule:
+    - cron: "0 */8 * * *"
+  workflow_dispatch:
+
+jobs:
+  daily-shorts:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.YOUTUBE_CLIENT_ID != '' && secrets.YOUTUBE_CLIENT_SECRET != '' && secrets.YOUTUBE_TOKEN_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run daily automation
+        env:
+          CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_TOKEN_BASE64: ${{ secrets.YOUTUBE_TOKEN_BASE64 }}
+          UPLOAD_INTERVAL_HOURS: ${{ secrets.UPLOAD_INTERVAL_HOURS }}
+          UPLOAD_TIMES: ${{ secrets.UPLOAD_TIMES }}
+          WATERMARK_TEXT: ${{ secrets.WATERMARK_TEXT }}
+          CONTENT_NICHES: ${{ secrets.CONTENT_NICHES }}
+          LICENSED_AUDIO_DIR: assets/audio
+          VISUAL_PRESET: premium_islamic_short
+          VOICEOVER_ENABLED: "false"
+          OUTPUT_DIR: output
+          LOGS_DIR: logs
+          AUTOMATION_DB_PATH: automation.sqlite
+          AUTO_PUBLISH: "false"
+          DEFAULT_UPLOAD_PRIVACY: "private"
+          DAILY_MAX_UPLOADS: "1"
+          TRANSFORMATION_REQUIRED: "true"
+          ALLOWED_SOURCE_POLICY: "strict"
+        run: |
+          mkdir -p logs output
+          python automation.py deploy-run --region US --mode local --max-uploads 1 > logs/daily.log 2>&1
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-shorts-logs
+          path: |
+            logs/
+            output/*.mp4

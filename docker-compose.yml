@@ -1,0 +1,18 @@
+services:
+  shorts-automation:
+    build: .
+    env_file:
+      - .env
+    environment:
+      AUTO_PUBLISH: "false"
+      DEFAULT_UPLOAD_PRIVACY: "private"
+      DAILY_MAX_UPLOADS: "1"
+      TRANSFORMATION_REQUIRED: "true"
+      ALLOWED_SOURCE_POLICY: "strict"
+      OUTPUT_DIR: "/data/output"
+      LOGS_DIR: "/data/logs"
+      AUTOMATION_DB_PATH: "/data/automation.sqlite"
+    volumes:
+      - ./data:/data
+      - ./assets/audio:/app/assets/audio:ro
+    command: ["python", "automation.py", "serve", "--region", "US", "--mode", "local"]
