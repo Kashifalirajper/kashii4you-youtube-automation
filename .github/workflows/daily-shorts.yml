@@ -1,6 +1,9 @@
 name: Daily Safe Shorts
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: "0 */8 * * *"
   workflow_dispatch:
@@ -23,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Validate upload secrets
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != 'true' }}
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != 'true') }}
         env:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
@@ -59,7 +62,9 @@ jobs:
           ALLOWED_SOURCE_POLICY: "strict"
         run: |
           mkdir -p logs output
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "push" ]; then
+            python automation.py run-once --region US --mode local --max-uploads 1 --dry-run > logs/daily.log 2>&1
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             python automation.py run-once --region US --mode local --max-uploads 1 --dry-run > logs/daily.log 2>&1
           else
             python automation.py deploy-run --region US --mode local --max-uploads 1 > logs/daily.log 2>&1
