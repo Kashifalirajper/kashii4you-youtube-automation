@@ -4,11 +4,15 @@ on:
   schedule:
     - cron: "0 */8 * * *"
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Generate no upload; useful for testing workflow setup"
+        required: false
+        default: "false"
 
 jobs:
   daily-shorts:
     runs-on: ubuntu-latest
-    if: ${{ secrets.YOUTUBE_CLIENT_ID != '' && secrets.YOUTUBE_CLIENT_SECRET != '' && secrets.YOUTUBE_TOKEN_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,6 +22,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: Validate upload secrets
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != 'true' }}
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_TOKEN_BASE64: ${{ secrets.YOUTUBE_TOKEN_BASE64 }}
+        run: |
+          test -n "$YOUTUBE_CLIENT_ID" || (echo "Missing YOUTUBE_CLIENT_ID secret" && exit 1)
+          test -n "$YOUTUBE_CLIENT_SECRET" || (echo "Missing YOUTUBE_CLIENT_SECRET secret" && exit 1)
+          test -n "$YOUTUBE_TOKEN_BASE64" || (echo "Missing YOUTUBE_TOKEN_BASE64 secret" && exit 1)
       - name: Run daily automation
         env:
           CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
@@ -45,7 +59,11 @@ jobs:
           ALLOWED_SOURCE_POLICY: "strict"
         run: |
           mkdir -p logs output
-          python automation.py deploy-run --region US --mode local --max-uploads 1 > logs/daily.log 2>&1
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            python automation.py run-once --region US --mode local --max-uploads 1 --dry-run > logs/daily.log 2>&1
+          else
+            python automation.py deploy-run --region US --mode local --max-uploads 1 > logs/daily.log 2>&1
+          fi
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
